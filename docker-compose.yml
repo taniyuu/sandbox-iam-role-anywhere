@@ -1,0 +1,31 @@
+services:
+  certgen:
+    image: alpine:3.22
+    entrypoint:
+      [
+        "/bin/sh",
+        "-c",
+        "apk add --no-cache openssl >/dev/null && exec sh /scripts/generate-certificate.sh",
+      ]
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./certs:/certs
+
+  app:
+    build:
+      context: .
+    depends_on:
+      certgen:
+        condition: service_completed_successfully
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    environment:
+      AWS_REGION: ${AWS_REGION:-ap-northeast-1}
+      AWS_PROFILE: rolesanywhere
+      AWS_CONFIG_FILE: /run/rolesanywhere/aws-config
+      ROLE_ARN: ${ROLE_ARN}
+      PROFILE_ARN: ${PROFILE_ARN}
+      TRUST_ANCHOR_ARN: ${TRUST_ANCHOR_ARN}
+    volumes:
+      - ./certs:/run/rolesanywhere/certs:ro
+    restart: "no"

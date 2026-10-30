@@ -1,0 +1,5 @@
+.env
+target/
+certs/*
+!certs/.gitkeep
+.DS_Store
